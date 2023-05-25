@@ -10,6 +10,8 @@ from .serializers import UserSerializer, UserAccountSerializer, UserProfileSeria
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework_simplejwt.views import TokenObtainPairView
 
+from django.db import transaction
+
 
 class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
     @classmethod
@@ -172,3 +174,10 @@ def updateBalance(request, id):
             serializer.save()
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+# @api_view(['GET', 'POST'])
+# @permission_classes([IsAuthenticated])
+# def Payment(request):
+#     if request.method == 'POST':
+#         user_one = request.POST.get('user')
