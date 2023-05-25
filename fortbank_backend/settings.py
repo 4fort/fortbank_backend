@@ -132,7 +132,7 @@ WSGI_APPLICATION = 'fortbank_backend.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'fortbank',
+        'NAME': 'fortpay',
         'USER': 'root',
         'PASSWORD': 'password123@',
         'HOST': 'localhost',

@@ -13,6 +13,18 @@ class UserAccount(models.Model):
         return self.user.username
 
 
+class FortBank(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, null=True)
+    owner_name = models.CharField(max_length=200, null=True)
+    email = models.CharField(max_length=200, null=True)
+    card_num = models.IntegerField(null=True)
+    card_pin = models.IntegerField(null=True)
+    balance = models.FloatField(null=True)
+
+    def __str__(self):
+        return self.owner_name + ' (' + str(self.card_num) + ') P' + str(self.balance)
+
+
 class UserProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, null=True)
 
