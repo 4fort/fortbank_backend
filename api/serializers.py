@@ -1,7 +1,12 @@
 from rest_framework import serializers
 from django.contrib.auth.models import User
-from .models import UserAccount, UserProfile, TransactionTicket
+from .models import UserWallet, UserAccount, UserProfile, TransactionTicket
 
+
+class UserWalletSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = UserWallet
+        fields = '__all__'
 
 class UserAccountSerializer(serializers.ModelSerializer):
     class Meta:
@@ -22,25 +27,28 @@ class TransactionTicketSerializer(serializers.ModelSerializer):
 
 
 class UserSerializer (serializers.ModelSerializer):
-    useraccount = UserAccountSerializer()
+    userwallet = UserWalletSerializer()
     userprofile = UserProfileSerializer()
+    useraccount_set = UserAccountSerializer(many=True, required=False)
     transactionticket_set = TransactionTicketSerializer(
         many=True, required=False)
 
     class Meta:
         model = User
         fields = ('id', 'username', 'email',
-                  'first_name', 'last_name', 'useraccount', 'userprofile', 'last_login', 'is_superuser', 'is_active', 'transactionticket_set')
+                  'first_name', 'last_name', 'userwallet','useraccount_set', 'userprofile', 'last_login', 'is_superuser', 'is_active', 'transactionticket_set')
 
     def create(self, validated_data):
-        useraccount_data = validated_data.pop('useraccount')
+        userwallet_data = validated_data.pop('userwallet')
         userprofile_data = validated_data.pop('userprofile')
+        useraccount_data = validated_data.pop('useraccount_set', [])
 
         transaction_tickets_data = validated_data.pop(
             'transactionticket_set', [])
 
         user = User.objects.create(**validated_data)
 
+        UserWallet.objects.create(user=user, **userwallet_data)
         UserAccount.objects.create(user=user, **useraccount_data)
         UserProfile.objects.create(user=user, **userprofile_data)
 
@@ -50,7 +58,18 @@ class UserSerializer (serializers.ModelSerializer):
         return user
 
     def update(self, instance, validated_data):
-        useraccount_data = validated_data.pop('useraccount', {})
+        userwallet_data = validated_data.pop('userwallet', {})
+        if not hasattr(instance, 'userwallet'):
+            if userwallet_data:
+                userwallet = UserWallet.objects.create(user=instance, **userwallet_data)
+                instance.userwallet = userwallet
+
+        userwallet_serializer = UserWalletSerializer(instance.userwallet, data=userwallet_data, partial=True)
+        if userwallet_serializer.is_valid():
+            userwallet = userwallet_serializer.save()
+            validated_data['userwallet'] = userwallet
+
+        useraccount_data = validated_data.pop('useraccount', [])
 
         if not hasattr(instance, 'useraccount'):
             if useraccount_data:
@@ -62,7 +81,7 @@ class UserSerializer (serializers.ModelSerializer):
             instance.useraccount, data=useraccount_data, partial=True)
         if useraccount_serializer.is_valid():
             useraccount = useraccount_serializer.save()
-            validated_data['useraccount'] = useraccount
+            validated_data['useraccount_set'] = useraccount
 
         userprofile_data = validated_data.pop('userprofile', {})
 

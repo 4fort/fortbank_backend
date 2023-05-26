@@ -3,26 +3,19 @@ from django.contrib.auth.models import User
 from datetime import datetime
 
 
-class UserAccount(models.Model):
+class UserWallet(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, null=True)
+    balance = models.FloatField(null=True)
+
+class UserAccount(models.Model):
+    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
+    brand = models.CharField(max_length=80, null=True)
     card_num = models.PositiveIntegerField(null=True)
     card_pin = models.PositiveIntegerField(null=True)
-    balance = models.FloatField(null=True)
-
+    date_added = models.DateTimeField(auto_now_add=True, null=True)
+    
     def __str__(self):
         return self.user.username
-
-
-class FortBank(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE, null=True)
-    owner_name = models.CharField(max_length=200, null=True)
-    email = models.CharField(max_length=200, null=True)
-    card_num = models.IntegerField(null=True)
-    card_pin = models.IntegerField(null=True)
-    balance = models.FloatField(null=True)
-
-    def __str__(self):
-        return self.owner_name + ' (' + str(self.card_num) + ') P' + str(self.balance)
 
 
 class UserProfile(models.Model):

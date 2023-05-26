@@ -11,6 +11,7 @@ from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework_simplejwt.views import TokenObtainPairView
 
 from django.db import transaction
+from datetime import datetime
 
 
 class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
@@ -103,29 +104,40 @@ def getTicket(request, reference_id):
 
 
 @api_view(['GET', 'POST', 'PUT', 'DELETE'])
-@permission_classes([IsAdminUser])
+@permission_classes([IsAdminUser, IsAuthenticated])
 def getUserAccount(request, id):
+    card_num = request.data.get('card_num')
+    card_pin = request.data.get('card_pin')
+
     try:
-        userAccount = UserAccount.objects.get(user=id)
+        userAccount = UserAccount.objects.filter(user=id)
     except UserAccount.DoesNotExist:
         return Response(status=status.HTTP_404_NOT_FOUND)
 
     if request.method == 'GET':
-        serializer = UserAccountSerializer(userAccount)
+        serializer = UserAccountSerializer(userAccount, many=True)
         return Response(serializer.data)
     elif request.method == 'POST':
-        serializer = UserAccountSerializer(data=request.data)
+        data = request.data.copy()
+        data['brand'] = data.get('brand')
+        data['card_num'] = data.get('card_num')
+        data['card_pin'] = data.get('card_pin')
+        data['user'] = id
+
+        serializer = UserAccountSerializer(data=data)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
     elif request.method == 'PUT':
-        serializer = UserAccountSerializer(userAccount, data=request.data)
+        account = UserAccount.objects.get(card_num=card_num, card_pin=card_pin)
+        serializer = UserAccountSerializer(account, data=request.data)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     elif request.method == 'DELETE':
-        userAccount.delete()
+        account = UserAccount.objects.get(card_num=card_num, card_pin=card_pin)
+        account.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
