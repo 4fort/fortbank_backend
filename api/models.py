@@ -7,13 +7,18 @@ class UserWallet(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, null=True)
     balance = models.FloatField(null=True)
 
+    def __str__(self):
+        return str(self.user)
+
+
 class UserAccount(models.Model):
     user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
     brand = models.CharField(max_length=80, null=True)
     card_num = models.PositiveIntegerField(null=True)
     card_pin = models.PositiveIntegerField(null=True)
+    enabled = models.BooleanField(default=True)
     date_added = models.DateTimeField(auto_now_add=True, null=True)
-    
+
     def __str__(self):
         return self.user.username
 
@@ -78,16 +83,18 @@ class UserContacts(models.Model):
 
 class UserTransactions(models.Model):
     TRANSACTION_TYPES = (
-        ('DEPOSIT', 'Deposit'),
-        ('WITHDRAWAL', 'Withdrawal'),
-        ('TRANSFER', 'Transfer'),
+        ('PAY', 'Pay'),
+        ('RECEIVE Payment', 'Receive Payment'),
+        ('ADD FUNDS', 'Add funds'),
+        ('TRANSFER TO BANK', 'Transfer to bank')
     )
 
-    sender = models.ForeignKey(
-        User, related_name='sent_transactions', on_delete=models.SET_NULL, null=True)
-    receiver = models.ForeignKey(
-        User, related_name='received_transactions', on_delete=models.SET_NULL, null=True)
-    transaction_date = models.DateField(auto_now_add=True)
+    user = models.ForeignKey(
+        User, related_name='transactionhistory_set', on_delete=models.CASCADE, null=True)
+    sent_to = models.CharField(max_length=200, null=True)
+    amount = models.FloatField(null=True)
+    previous_balance = models.FloatField(null=True)
+    transaction_date = models.DateTimeField(auto_now_add=True, null=True)
     transaction_type = models.CharField(
         max_length=20, choices=TRANSACTION_TYPES)
 
